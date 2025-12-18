@@ -1,6 +1,6 @@
 // Version simplifiée sans dépendances externes
 
-export function startmenu() {
+export function startmenu(onStartCallback) {
     let aScene = document.querySelector("a-scene");
 
     async function ambientSound() {
@@ -43,14 +43,21 @@ export function startmenu() {
     startButton.setAttribute("class", "clickable");
 
     startButton.addEventListener("click", async function () {
+        console.log("Start button clicked in start.js");
         title.parentNode.removeChild(title);
         plane.parentNode.removeChild(plane);
         paragraph.parentNode.removeChild(paragraph);
         startButton.parentNode.removeChild(startButton);
         // L'environnement 3D est maintenant explorable
+        
+        // Call the game start callback if provided
+        if (onStartCallback && typeof onStartCallback === 'function') {
+            console.log("Calling game start callback");
+            onStartCallback();
+        }
     });
     
     aScene.appendChild(startButton);
-}
 
-startmenu();
+    return true;
+}
