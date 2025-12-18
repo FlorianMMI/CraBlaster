@@ -50,16 +50,17 @@
 </script>
 
 <script src="start.js" type="module"></script>
+<script src="spawn.js"></script>
 
 <!--<script src="start.js" type="module"></script>-->
 
 
 </head>
 <body>
-  <a-scene data-map="large">
+  <a-scene data-map="large" spawn-manager>
     
     <!-- Player -->
-    <a-entity id="rig" position="0 0 2" movement-controls="constrainToNavMesh: false; speed: 0">
+    <a-entity id="rig" position="0 0 2" movement-controls="constrainToNavMesh: true; speed: 0.5">
 
       <a-entity camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
         <a-cursor id="cursor" color="white" fuse="false" visible="false"></a-cursor>
@@ -89,6 +90,7 @@
         <a-asset-item id="navmesh" src="asset/navmesh.glb"></a-asset-item>
 
       <a-asset-item id="astro" src="asset/Astronaut.glb"></a-asset-item>
+
       <a-asset-item id="astro1" src="asset/Astronaut1.glb"></a-asset-item>
       <a-asset-item id="astro2" src="asset/Astronaut2.glb"></a-asset-item>
       <a-asset-item id="pad" src="asset/Landing Pad.glb"></a-asset-item>
@@ -109,10 +111,8 @@
       <a-asset-item id="planet" src="asset/Planet.glb"></a-asset-item>
       <a-asset-item id="spaceship" src="asset/Spaceship.glb"></a-asset-item>
       <a-asset-item id="alien" src="asset/Enemy Large.glb"></a-asset-item>
-      <audio id="fail" src="asset/fail.wav"></audio>
-      <audio id="success" src="asset/success.wav"></audio>
-      <img id = "ciel" src = "asset/sky.png" >
-      <img id = "nuage" src = "asset/nuage.png" >
+      <!-- <img id = "ciel" src = "asset/sky.png" > -->
+      <img id="ciel2" src="asset/ciel2.png">
     </a-assets>
 
     <a-entity nav-mesh gltf-model="#navmesh" position="0.02 0 -9.260" scale="7.35 7.35 7.35" visible="false" ></a-entity>
@@ -131,7 +131,15 @@
     <a-light type="ambient" color="#77A"></a-light>
     
     <!-- Skybox -->
-    <a-sky src="#ciel"></a-sky >
+    <a-sky src="#ciel2"></a-sky >
+
+      <!-- <a-box position="1 1 -65" rotation="0 0 0" scale="1 1 1" material="side: double;"></a-box>
+      <a-box position="-90 1 14" rotation="0 0 0" scale="1 1 1" material="side: double;"></a-box>
+      <a-box position="21 1 91" rotation="0 0 0" scale="1 1 1" material="side: double;"></a-box>
+      <a-box position="107 1 -10" rotation="0 0 0" scale="1 1 1" material="side: double;"></a-box>
+      <a-box position="120 1 -136" rotation="0 0 0" scale="1 1 1" material="side: double;"></a-box>
+      <a-box position="-135 1 104" rotation="0 0 0" scale="1 1 1" material="side: double;"></a-box> -->
+
 
     <!-- Cargo et lampadaire -->
     <a-entity position="-14 -1 26">
