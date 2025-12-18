@@ -77,8 +77,3 @@ AFRAME.registerComponent('filter-part', {
     el.setAttribute("filter-part", `targetPart: ${part}; autoCenter: ${autoCenter}`);
 });
 
-/* Spawn aléatoire de cailloux sur la map */
-/* Commenté car ça met quand même un petit coup de lag */
-// scene.addEventListener('loaded', () => {
-//     spawnRandomRocks(500, 250);
-// });
