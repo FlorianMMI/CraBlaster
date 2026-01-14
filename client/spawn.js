@@ -36,6 +36,12 @@ AFRAME.registerComponent('spawn-manager', {
       self.startSpawning();
     });
     
+    // Écouter l'événement de fin de partie pour supprimer les ennemis
+    this.el.sceneEl.addEventListener('game-end', function() {
+      console.log('🏁 Événement game-end reçu dans spawn-manager !');
+      self.stopSpawning();
+    });
+    
     console.log('✅ Spawn-manager initialisé, en attente du game-start...');
   },
 

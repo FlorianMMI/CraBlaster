@@ -27,9 +27,9 @@ export function startmenu(onStartCallback) {
 
     let Timer = document.createElement("a-text");
     Timer.setAttribute("value", "2:00");
-    Timer.setAttribute("position", `0 0.3 -0.5`);
+    Timer.setAttribute("position", `0.75 0.35 -0.5`);
     Timer.setAttribute("rotation", `0 0 0`);
-    Timer.setAttribute("text", "align: center; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
+    Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
     Timer.setAttribute("material", "depthTest: false");
     
     // Attacher le timer à la caméra
@@ -88,7 +88,7 @@ export function startmenu(onStartCallback) {
             if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
                 Timer.setAttribute("value", "0:00");
-                Timer.setAttribute("text", "align: center; width: 2 ; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
+                Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
                 // Remettre le sky à sa rotation initiale
                 sky.setAttribute("rotation", "0 0 0");
                 console.log('⏰ Temps écoulé !');
@@ -104,7 +104,7 @@ export function startmenu(onStartCallback) {
                 
                 // Changer la couleur en rouge quand il reste moins de 30 secondes
                 if (timeRemaining <= 30) {
-                    Timer.setAttribute("text", "align: center; width: 0.3; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
+                    Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
                 }
             }
         }, 1000);
