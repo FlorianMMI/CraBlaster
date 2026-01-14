@@ -19,8 +19,7 @@
           function onTriggerDown(evt) {
               let intersectedEl = evt.target.components.raycaster.intersectedEls[0];
               if (intersectedEl) {
-                  
-                 
+                
               }
           }
 
@@ -49,8 +48,8 @@
   });
 </script>
 
-<script src="start.js" type="module"></script>
 <script src="spawn.js"></script>
+<script src="game.js" type="module"></script>
 
 <!--<script src="start.js" type="module"></script>-->
 
@@ -87,7 +86,7 @@
 
     <!-- Assets -->
     <a-assets>
-        <a-asset-item id="navmesh" src="asset/navmesh.glb"></a-asset-item>
+      <a-asset-item id="navmesh" src="asset/navmesh.glb"></a-asset-item>
 
       <a-asset-item id="astro" src="asset/Astronaut.glb"></a-asset-item>
 
@@ -127,6 +126,10 @@
     <a-light id="light-right" type="point" color="yellow"  position="2 21 -10" light="type: point; intensity: 1; distance: 5;"></a-light>
     <a-light type="spot" id="drone-light" color="yellow" position="0 22 -10" intensity="0.8" angle="25" rotation="-90 0 0" penumbra="0.8"></a-light>
     
+    <a-entity id="enemy-1" data-tag="enemy" position="0 0 -20" nav-agent="speed: 3; active: true">
+      <a-box color="red" scale="2 2 2" position="0 0 0"></a-box>
+    </a-entity>
+
     <!-- Lumière ambient -->
     <a-light type="ambient" color="#77A"></a-light>
     

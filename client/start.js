@@ -1,6 +1,6 @@
 // Version simplifiée sans dépendances externes
 
-export function startmenu() {
+export function startmenu(onStartCallback) {
     let aScene = document.querySelector("a-scene");
     let sky = document.querySelector("a-sky");
 
@@ -43,6 +43,7 @@ export function startmenu() {
     let timeRemaining = 120; // 2 minutes en secondes
 
     startButton.addEventListener("click", async function () {
+        console.log("Start button clicked in start.js");
         title.parentNode.removeChild(title);
         plane.parentNode.removeChild(plane);
         paragraph.parentNode.removeChild(paragraph);
@@ -80,9 +81,15 @@ export function startmenu() {
         }, 1000);
         
         // L'environnement 3D est maintenant explorable
+        
+        // Call the game start callback if provided
+        if (onStartCallback && typeof onStartCallback === 'function') {
+            console.log("Calling game start callback");
+            onStartCallback();
+        }
     });
     
     aScene.appendChild(startButton);
-}
 
-startmenu();
+    return true;
+}
