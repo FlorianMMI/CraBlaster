@@ -1,5 +1,4 @@
 export default function enemyBehavior(enemy){
-
   const rig = document.querySelector('#rig');
   if (!rig) return;
 

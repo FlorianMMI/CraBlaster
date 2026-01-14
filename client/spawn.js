@@ -108,6 +108,8 @@ AFRAME.registerComponent('spawn-manager', {
     astronaut.setAttribute('gltf-model', '#astro');
     astronaut.setAttribute('position', `${spawnX} ${spawnY} ${spawnZ}`);
     astronaut.setAttribute('scale', '1 1 1');
+    astronaut.setAttribute('data-tag', 'enemy');
+    astronaut.setAttribute('nav-agent', "speed: 3; active: true");
     
     // Rotation aléatoire pour plus de variété
     const randomRotation = Math.random() * 360;
