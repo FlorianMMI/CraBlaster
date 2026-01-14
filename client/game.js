@@ -1,5 +1,6 @@
 import enemyBehavior from "./enemyBehavior.js";
 import { startmenu } from "./start.js";
+import { endmenu } from "./end.js";
 
 // Game state
 let isRunning = false;
@@ -11,6 +12,13 @@ function init() {
     
     // Wait for A-Frame scene to be ready
     let aScene = document.querySelector("a-scene");
+    
+    // Écouter l'événement de fin de partie
+    aScene.addEventListener('game-end', () => {
+        console.log('🏁 Fin de partie détectée, affichage de l\'écran de fin');
+        stopGame();
+        endmenu(startGame);
+    });
     
     if (aScene.hasLoaded) {
         console.log("Scene already loaded, showing menu");

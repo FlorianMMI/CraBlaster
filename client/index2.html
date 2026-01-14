@@ -48,7 +48,8 @@
   });
 </script>
 
-<script src="spawn.js"></script>
+<script src="fogManager.js"></script>
+<script src="spawn.js" type="module"></script>
 <script src="game.js" type="module"></script>
 
 <!--<script src="start.js" type="module"></script>-->
@@ -56,7 +57,8 @@
 
 </head>
 <body>
-  <a-scene data-map="large" spawn-manager>
+  <a-scene data-map="large" spawn-manager fog-manager="duration: 5000; color: #888; near: 1; far: 50" >
+    
     
     <!-- Player -->
     <a-entity id="rig" position="0 0 2" movement-controls="constrainToNavMesh: true; speed: 0.5">

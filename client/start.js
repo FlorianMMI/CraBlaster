@@ -27,10 +27,29 @@ export function startmenu(onStartCallback) {
 
     let Timer = document.createElement("a-text");
     Timer.setAttribute("value", "2:00");
-    Timer.setAttribute("position", `-123 33 0`);
-    Timer.setAttribute("rotation", `0 90 0`);
-    Timer.setAttribute("text", "align: center; width: 250; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
-    aScene.appendChild(Timer);
+    Timer.setAttribute("position", `0 0.3 -0.5`);
+    Timer.setAttribute("rotation", `0 0 0`);
+    Timer.setAttribute("text", "align: center; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
+    Timer.setAttribute("material", "depthTest: false");
+    
+    // Attacher le timer à la caméra
+    setTimeout(function() {
+        let camera = document.querySelector('[camera]');
+        if (camera) {
+            camera.appendChild(Timer);
+            console.log('⏱️ Timer attaché à la caméra');
+        }
+    }, 100);
+    
+    // Désactiver le fog pour le timer après qu'il soit chargé
+    Timer.addEventListener('loaded', function() {
+        const mesh = Timer.getObject3D('mesh');
+        if (mesh && mesh.material) {
+            mesh.material.fog = false;
+            mesh.material.depthTest = false;
+            mesh.renderOrder = 999;
+        }
+    });
 
     let startButton = document.createElement("a-entity");
     startButton.setAttribute("geometry", "primitive: plane; width: 1.5; height: 0.9;");
@@ -60,13 +79,23 @@ export function startmenu(onStartCallback) {
         timerInterval = setInterval(function() {
             timeRemaining--;
             
+            // Déclencher la fuite des ennemis 10 secondes avant la fin
+            if (timeRemaining === 10) {
+                aScene.emit('enemies-flee');
+                console.log('🏃 Les ennemis fuient maintenant !');
+            }
+            
             if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
                 Timer.setAttribute("value", "0:00");
-                Timer.setAttribute("text", "align: center; width: 250; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
+                Timer.setAttribute("text", "align: center; width: 2 ; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
                 // Remettre le sky à sa rotation initiale
                 sky.setAttribute("rotation", "0 0 0");
                 console.log('⏰ Temps écoulé !');
+                
+                // Émettre l'événement de fin de partie
+                aScene.emit('game-end');
+                console.log('🏁 Fin de partie - Timer à 0 !');
             } else {
                 let minutes = Math.floor(timeRemaining / 60);
                 let seconds = timeRemaining % 60;
@@ -75,7 +104,7 @@ export function startmenu(onStartCallback) {
                 
                 // Changer la couleur en rouge quand il reste moins de 30 secondes
                 if (timeRemaining <= 30) {
-                    Timer.setAttribute("text", "align: center; width: 250; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
+                    Timer.setAttribute("text", "align: center; width: 0.3; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
                 }
             }
         }, 1000);
