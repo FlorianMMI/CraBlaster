@@ -2,6 +2,60 @@
 const enemyData = new Map();
 let enemiesShouldFlee = false;
 
+// Créer une barre de vie pour un ennemi
+function createHealthBar(enemy) {
+  const healthBarContainer = document.createElement('a-entity');
+  healthBarContainer.setAttribute('id', `healthbar-${enemy.id}`);
+  healthBarContainer.setAttribute('position', '0 2.5 0');
+  
+  // Fond de la barre (rouge)
+  const healthBarBg = document.createElement('a-plane');
+  healthBarBg.setAttribute('width', '1');
+  healthBarBg.setAttribute('height', '0.15');
+  healthBarBg.setAttribute('color', '#FF0000');
+  healthBarBg.setAttribute('material', 'shader: flat; transparent: true; opacity: 0.8');
+  healthBarContainer.appendChild(healthBarBg);
+  
+  // Barre de vie (verte)
+  const healthBarFill = document.createElement('a-plane');
+  healthBarFill.setAttribute('id', `healthbar-fill-${enemy.id}`);
+  healthBarFill.setAttribute('width', '1');
+  healthBarFill.setAttribute('height', '0.15');
+  healthBarFill.setAttribute('color', '#00FF00');
+  healthBarFill.setAttribute('material', 'shader: flat; transparent: true; opacity: 0.9');
+  healthBarFill.setAttribute('position', '0 0 0.01');
+  healthBarContainer.appendChild(healthBarFill);
+  
+  // Faire face à la caméra
+  healthBarContainer.setAttribute('look-at', '#player');
+  
+  enemy.appendChild(healthBarContainer);
+  console.log(`❤️ Barre de vie créée pour ${enemy.id}`);
+}
+
+// Mettre à jour la barre de vie d'un ennemi
+export function updateEnemyHealth(enemyId, currentHealth, maxHealth) {
+  const healthBarFill = document.getElementById(`healthbar-fill-${enemyId}`);
+  if (healthBarFill) {
+    const healthPercent = currentHealth / maxHealth;
+    const newWidth = Math.max(0, healthPercent);
+    healthBarFill.setAttribute('width', newWidth);
+    
+    // Changer la couleur en fonction de la santé
+    let color = '#00FF00'; // Vert
+    if (healthPercent < 0.3) {
+      color = '#FF0000'; // Rouge
+    } else if (healthPercent < 0.6) {
+      color = '#FFA500'; // Orange
+    }
+    healthBarFill.setAttribute('color', color);
+    
+    // Déplacer la barre pour qu'elle reste centrée
+    const offset = -(1 - newWidth) / 2;
+    healthBarFill.setAttribute('position', `${offset} 0 0.01`);
+  }
+}
+
 // Écouter l'événement de fuite
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
@@ -39,11 +93,20 @@ export default function enemyBehavior(enemy){
     enemyData.set(enemyId, {
       lastPosition: enemyPos.clone(),
       lastMoveTime: Date.now(),
-      stuckCount: 0
+      stuckCount: 0,
+      maxHealth: 100,
+      currentHealth: 100,
+      healthBarCreated: false
     });
   }
   
+  // Créer la barre de vie si elle n'existe pas encore
   const data = enemyData.get(enemyId);
+  if (!data.healthBarCreated) {
+    createHealthBar(enemy);
+    data.healthBarCreated = true;
+  }
+  
   const currentTime = Date.now();
   
   // Calculer la distance parcourue depuis la dernière vérification
@@ -133,4 +196,29 @@ export function cleanupEnemyData(enemyId) {
   if (enemyData.has(enemyId)) {
     enemyData.delete(enemyId);
   }
+}
+
+// Infliger des dégâts à un ennemi
+export function damageEnemy(enemyId, damage) {
+  const data = enemyData.get(enemyId);
+  if (data) {
+    data.currentHealth -= damage;
+    data.currentHealth = Math.max(0, data.currentHealth);
+    updateEnemyHealth(enemyId, data.currentHealth, data.maxHealth);
+    
+    console.log(`💥 ${enemyId} a pris ${damage} dégâts (${data.currentHealth}/${data.maxHealth})`);
+    
+    // Si l'ennemi est mort, le supprimer
+    if (data.currentHealth <= 0) {
+      const enemy = document.getElementById(enemyId);
+      if (enemy && enemy.parentNode) {
+        enemy.parentNode.removeChild(enemy);
+        cleanupEnemyData(enemyId);
+        console.log(`☠️ ${enemyId} est mort !`);
+      }
+    }
+    
+    return data.currentHealth;
+  }
+  return 0;
 }

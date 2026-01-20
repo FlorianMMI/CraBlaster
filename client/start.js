@@ -51,6 +51,34 @@ export function startmenu(onStartCallback) {
         }
     });
 
+    // Créer l'affichage du score en dessous du timer
+    let ScoreDisplay = document.createElement("a-text");
+    ScoreDisplay.setAttribute("value", "Score: 0");
+    ScoreDisplay.setAttribute("position", `0.75 0.25 -0.5`);
+    ScoreDisplay.setAttribute("rotation", `0 0 0`);
+    ScoreDisplay.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #ffffff; negate: false; opacity: 1; alphaTest: 0.5");
+    ScoreDisplay.setAttribute("material", "depthTest: false");
+    ScoreDisplay.setAttribute("data-score-display", "");
+    
+    // Attacher le score à la caméra
+    setTimeout(function() {
+        let camera = document.querySelector('[camera]');
+        if (camera) {
+            camera.appendChild(ScoreDisplay);
+            console.log('🏆 Score attaché à la caméra');
+        }
+    }, 100);
+    
+    // Désactiver le fog pour le score après qu'il soit chargé
+    ScoreDisplay.addEventListener('loaded', function() {
+        const mesh = ScoreDisplay.getObject3D('mesh');
+        if (mesh && mesh.material) {
+            mesh.material.fog = false;
+            mesh.material.depthTest = false;
+            mesh.renderOrder = 999;
+        }
+    });
+
     let startButton = document.createElement("a-entity");
     startButton.setAttribute("geometry", "primitive: plane; width: 1.5; height: 0.9;");
     startButton.setAttribute("material", "src: url(asset/Rectangle 4.png); transparent: true");
