@@ -137,7 +137,7 @@ AFRAME.registerComponent('spawn-manager', {
     const distance = Math.random() * this.data.spawnRadius; // Distance aléatoire dans le rayon
     
     const spawnX = randomPoint.x + Math.cos(angle) * distance;
-    const spawnY = randomPoint.y-1;
+    const spawnY = randomPoint.y - 1; // Baissé de -1 à -2 pour être plus proche du sol
     const spawnZ = randomPoint.z + Math.sin(angle) * distance;
 
     // Créer l'entité astronaute

@@ -1,4 +1,5 @@
 // Version simplifiée sans dépendances externes
+import { getScore } from "./game.js";
 
 export function endmenu(onRestartCallback) {
     let aScene = document.querySelector("a-scene");
@@ -25,10 +26,12 @@ export function endmenu(onRestartCallback) {
     plane.setAttribute("position", `0 2.2 -5.2`);
     aScene.appendChild(plane);
 
+    let finalScore = getScore();
+    
     let paragraph = document.createElement("a-text");
-    paragraph.setAttribute("value", "Votre Score est:");
+    paragraph.setAttribute("value", `Votre Score est: ${finalScore}`);
     paragraph.setAttribute("position", `0 2.2 -5`);
-    paragraph.setAttribute("text", "align: center; width: 13; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
+    paragraph.setAttribute("text", "align: center; width: 13; font: asset/Michroma-Regular-msdf.json; color: #FFD700; negate: false; opacity: 1; alphaTest: 0.5");
     aScene.appendChild(paragraph);
 
     let RestartButton = document.createElement("a-entity");
@@ -48,16 +51,23 @@ export function endmenu(onRestartCallback) {
         // Rotation du sky au lancement de la partie
         sky.setAttribute("rotation", "180 0 0");
         
-        // Récupérer le timer existant et le remettre à zéro
+        // Récupérer le timer et le score existants et les remettre à zéro
         let existingTimer = aScene.querySelectorAll('a-text');
         for (let timer of existingTimer) {
             let value = timer.getAttribute('value');
             if (value && value.includes(':')) {
                 timer.setAttribute("value", "2:00");
-                timer.setAttribute("text", "align: center; width: 250; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
+                timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
                 console.log('⏱️ Timer remis à zéro');
-                break;
             }
+        }
+        
+        // Remettre le score à 0
+        let existingScore = aScene.querySelector('[data-score-display]');
+        if (existingScore) {
+            existingScore.setAttribute("value", "Score: 0");
+            existingScore.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFD700; negate: false; opacity: 1; alphaTest: 0.5");
+            console.log('🏆 Score remis à zéro');
         }
         
         // Déclencher le redémarrage de la partie

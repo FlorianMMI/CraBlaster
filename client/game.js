@@ -5,6 +5,7 @@ import { endmenu } from "./end.js";
 // Game state
 let isRunning = false;
 let lastTime = 0;
+let gameScore = 0;
 
 // Initialize your game (show start menu)
 function init() {
@@ -63,11 +64,39 @@ function render() {
     // Draw your game here
 }
 
+// Score management
+export function addScore(points) {
+    gameScore += points;
+    updateScoreDisplay();
+    console.log(`➕ +${points} points | Score: ${gameScore}`);
+}
+
+export function removeScore(points) {
+    gameScore -= points;
+    if (gameScore < 0) gameScore = 0;
+    updateScoreDisplay();
+    console.log(`➖ -${points} points | Score: ${gameScore}`);
+}
+
+export function getScore() {
+    return gameScore;
+}
+
+function updateScoreDisplay() {
+    let aScene = document.querySelector("a-scene");
+    let scoreText = aScene.querySelector('[data-score-display]');
+    if (scoreText) {
+        scoreText.setAttribute("value", `Score: ${gameScore}`);
+    }
+}
+
 // Start/stop controls
 function startGame() {
     console.log("Game started");
     if (!isRunning) {
         isRunning = true;
+        gameScore = 0; // Réinitialiser le score
+        updateScoreDisplay();
         lastTime = performance.now();
         requestAnimationFrame(gameLoop);
     }
