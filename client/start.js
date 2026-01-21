@@ -48,11 +48,7 @@ export function startmenu() {
         paragraph.parentNode.removeChild(paragraph);
         startButton.parentNode.removeChild(startButton);
         // L'environnement 3D est maintenant explorable
-        
-        // Importer et initialiser le sabre
-        import('./weapons/sabre.js').then(module => {
-            module.initSabre();
-        });
+        // Les armes seront sélectionnées via la roue d'armes (Tab)
     });
     
     aScene.appendChild(startButton);

@@ -242,12 +242,13 @@ AFRAME.registerComponent('pistolet-shooter', {
 });
 
 // Helper: attach pistol to rightController automatically by adding the component to the scene
-document.addEventListener('DOMContentLoaded', () => {
-	const scene = document.querySelector('a-scene');
-	if (!scene) return;
-	if (!document.querySelector('[pistolet-shooter]')) {
-		const gunHolder = document.createElement('a-entity');
-		gunHolder.setAttribute('pistolet-shooter', '');
-		scene.appendChild(gunHolder);
-	}
-});
+// DÉSACTIVÉ - Le pistolet est maintenant géré par la roue d'armes (weapons.js)
+// document.addEventListener('DOMContentLoaded', () => {
+// 	const scene = document.querySelector('a-scene');
+// 	if (!scene) return;
+// 	if (!document.querySelector('[pistolet-shooter]')) {
+// 		const gunHolder = document.createElement('a-entity');
+// 		gunHolder.setAttribute('pistolet-shooter', '');
+// 		scene.appendChild(gunHolder);
+// 	}
+// });

@@ -34,8 +34,10 @@
     let intersectedEl = evt.detail.intersectedEl;
     
     if (intersectedEl && intersectedEl.classList.contains("clickable")) {
+        console.log('Cursor clicked on clickable:', intersectedEl);
         
-        
+        // Déclencher l'événement click sur l'élément
+        intersectedEl.dispatchEvent(new Event('click'));
         
         // Empêche toute propagation de l'événement pour éviter des déclenchements indésirables
         evt.stopPropagation();
@@ -50,8 +52,7 @@
 </script>
 
 <script src="start.js" type="module"></script>
-<script src="weapons/sabre.js" type="module"></script>
-<script src="weapons/pistolet.js" type="module"></script>
+<script src="weapons/weapons.js" type="module"></script>
 
 <!--<script src="start.js" type="module"></script>-->
 
@@ -64,7 +65,7 @@
     <a-entity id="rig" position="0 0 2" movement-controls="constrainToNavMesh: true; speed: 0.5">
 
       <a-entity camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
-        <a-cursor id="cursor" color="white" fuse="false" visible="false"></a-cursor>
+        <a-cursor id="cursor" color="white" fuse="false" visible="false" raycaster="objects: .clickable, .weapon-slot"></a-cursor>
         <script>
         if (AFRAME.utils.device.isMobileVR()) {
           document.querySelector("#cursor").setAttribute("visible", "false");
