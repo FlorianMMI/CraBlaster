@@ -138,12 +138,14 @@ export function startmenu(onStartCallback) {
         }, 1000);
         
         // L'environnement 3D est maintenant explorable
+
         
         // Call the game start callback if provided
         if (onStartCallback && typeof onStartCallback === 'function') {
             console.log("Calling game start callback");
             onStartCallback();
         }
+
     });
     
     aScene.appendChild(startButton);

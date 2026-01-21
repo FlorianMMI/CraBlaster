@@ -33,8 +33,10 @@
     let intersectedEl = evt.detail.intersectedEl;
     
     if (intersectedEl && intersectedEl.classList.contains("clickable")) {
+        console.log('Cursor clicked on clickable:', intersectedEl);
         
-        
+        // Déclencher l'événement click sur l'élément
+        intersectedEl.dispatchEvent(new Event('click'));
         
         // Empêche toute propagation de l'événement pour éviter des déclenchements indésirables
         evt.stopPropagation();
@@ -48,9 +50,13 @@
   });
 </script>
 
+
+<script src="weapons/weapons.js" type="module"></script>
+
 <script src="fogManager.js"></script>
 <script src="spawn.js" type="module"></script>
 <script src="game.js" type="module"></script>
+
 
 <!--<script src="start.js" type="module"></script>-->
 
@@ -64,7 +70,7 @@
     <a-entity id="rig" position="0 0 2" movement-controls="constrainToNavMesh: true; speed: 0.5">
 
       <a-entity camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
-        <a-cursor id="cursor" color="white" fuse="false" visible="false"></a-cursor>
+        <a-cursor id="cursor" color="white" fuse="false" visible="false" raycaster="objects: .clickable, .weapon-slot"></a-cursor>
         <script>
         if (AFRAME.utils.device.isMobileVR()) {
           document.querySelector("#cursor").setAttribute("visible", "false");
@@ -111,9 +117,19 @@
       <a-asset-item id="cargo" src="asset/Cargo.glb"></a-asset-item>
       <a-asset-item id="planet" src="asset/Planet.glb"></a-asset-item>
       <a-asset-item id="spaceship" src="asset/Spaceship.glb"></a-asset-item>
+      <a-asset-item id="pistoletModel" src="asset/Pistolet.glb"></a-asset-item>
       <a-asset-item id="alien" src="asset/Enemy Large.glb"></a-asset-item>
+
+      <a-asset-item id="sabre" src="asset/Sabre.glb"></a-asset-item>
+      <audio id="fail" src="asset/fail.wav"></audio>
+      <audio id="success" src="asset/success.wav"></audio>
+      <audio id="sabre-sound" src="asset/lightsaber.mp3"></audio>
+      <audio id="pioupiou" src="asset/PiouPiou.mp3"></audio>
+      <img id = "nuage" src = "asset/nuage.png" >
+
       <!-- <img id = "ciel" src = "asset/sky.png" > -->
       <img id="ciel2" src="asset/ciel2.png">
+
     </a-assets>
 
     <a-entity nav-mesh gltf-model="#navmesh" position="0.02 0 -9.260" scale="7.35 7.35 7.35" visible="false" ></a-entity>
