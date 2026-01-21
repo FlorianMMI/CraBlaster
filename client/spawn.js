@@ -1,6 +1,15 @@
 // Composant A-Frame pour gérer le spawn d'astronautes
 import { cleanupEnemyData } from './enemyBehavior.js';
 
+// Composant pour mettre à jour les animations
+AFRAME.registerComponent('tick-handler', {
+  tick: function(time, deltaTime) {
+    if (this.el.mixer) {
+      this.el.mixer.update(deltaTime / 1000);
+    }
+  }
+});
+
 AFRAME.registerComponent('spawn-manager', {
   schema: {
     initialInterval: { type: 'number', default: 1500 }, // Intervalle de départ (1.5 secondes)
@@ -137,7 +146,7 @@ AFRAME.registerComponent('spawn-manager', {
     const distance = Math.random() * this.data.spawnRadius; // Distance aléatoire dans le rayon
     
     const spawnX = randomPoint.x + Math.cos(angle) * distance;
-    const spawnY = randomPoint.y - 1; // Baissé de -1 à -2 pour être plus proche du sol
+    const spawnY = randomPoint.y - 1.25; // Baissé de -1 à -2 pour être plus proche du sol
     const spawnZ = randomPoint.z + Math.sin(angle) * distance;
 
     // Créer l'entité astronaute
@@ -149,9 +158,45 @@ AFRAME.registerComponent('spawn-manager', {
     astronaut.setAttribute('data-tag', 'enemy');
     astronaut.setAttribute('nav-agent', "speed: 3; active: true");
     
+    // Démarrer l'animation après le chargement du modèle
+    astronaut.addEventListener('model-loaded', function() {
+      const model = this.getObject3D('mesh');
+      if (model) {
+        const mixer = new THREE.AnimationMixer(model);
+        // Chercher l'animation de marche dans le modèle
+        model.traverse(function(node) {
+          if (node.animations && node.animations.length > 0) {
+            // Jouer la première animation (généralement Walk)
+            const action = mixer.clipAction(node.animations[0]);
+            action.play();
+            console.log('🚶 Animation de marche lancée pour', astronaut.id);
+          }
+        });
+        // Si les animations sont au niveau racine du model
+        if (model.animations && model.animations.length > 0) {
+          const action = mixer.clipAction(model.animations[0]);
+          action.play();
+          console.log('🚶 Animation de marche lancée pour', astronaut.id);
+        }
+        // Stocker le mixer pour l'update
+        this.mixer = mixer;
+      }
+    });
+    
+    // Mettre à jour le mixer à chaque frame
+    astronaut.setAttribute('tick-handler', '');
+    
     // Rotation aléatoire pour plus de variété
     const randomRotation = Math.random() * 360;
     astronaut.setAttribute('rotation', `0 ${randomRotation} 0`);
+    
+    // Ajouter un UFO juste en dessous de l'ennemi
+    const ufo = document.createElement('a-entity');
+    ufo.setAttribute('gltf-model', '#ufo');
+    ufo.setAttribute('position', '0 0 0'); // Positionné en dessous de l'ennemi
+    ufo.setAttribute('scale', '0.25 0.25 0.25'); // Réduire la taille
+    ufo.setAttribute('rotation', '0 0 0');
+    astronaut.appendChild(ufo);
 
     // Ajouter l'astronaute à la scène
     this.el.sceneEl.appendChild(astronaut);
