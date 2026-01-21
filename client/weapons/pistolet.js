@@ -1,11 +1,32 @@
 // Composant A-Frame : `pistolet-shooter`
+
+// Variable globale pour savoir si la partie est en cours
+let isGameRunning = false;
+
+// Écouter les événements de jeu
+if (typeof document !== 'undefined') {
+	document.addEventListener('DOMContentLoaded', () => {
+		const scene = document.querySelector('a-scene');
+		if (scene) {
+			scene.addEventListener('game-start', () => {
+				isGameRunning = true;
+				console.log('🔫 Blaster activé pour le jeu');
+			});
+			scene.addEventListener('game-end', () => {
+				isGameRunning = false;
+				console.log('🔫 Blaster désactivé (menu)');
+			});
+		}
+	});
+}
+
 AFRAME.registerComponent('pistolet-shooter', {
 	schema: {
 		handSelector: { type: 'string', default: '#rightController' },
 		modelId: { type: 'string', default: '#pistoletModel' },
 		ammoSpeed: { type: 'number', default: 50 }, // units per second
 		magazine: { type: 'int', default: 12 },
-		damage: { type: 'number', default: 25 },
+		damage: { type: 'number', default: 50 }, // 2 tirs pour tuer un ennemi (100 HP)
 		explosionRadius: { type: 'number', default: 0.6 },
 		reloadTime: { type: 'number', default: 1500 } // ms
 	},
@@ -103,6 +124,9 @@ AFRAME.registerComponent('pistolet-shooter', {
 	},
 
 	shoot: function () {
+		// Ne pas tirer si la partie n'est pas en cours (menu start/end)
+		if (!isGameRunning) return;
+		
 		if (!this.canShoot || this.reloading) return;
 		if (this.ammo <= 0) {
 			this.reload();
@@ -203,9 +227,79 @@ AFRAME.registerComponent('pistolet-shooter', {
 	reload: function () {
 		if (this.reloading) return;
 		this.reloading = true;
+		
+		// Jouer le son de rechargement (air)
+		const airSound = document.querySelector('#air');
+		if (airSound) {
+			const soundClone = airSound.cloneNode();
+			soundClone.play().catch(() => {});
+		}
+		
+		// Créer un effet de fumée lors du rechargement avec des sphères
+		const refObj = (this.hand && this.hand.object3D) ? this.hand.object3D : (this.modelEl && this.modelEl.object3D);
+		const spawnPos = new THREE.Vector3();
+		
+		if (refObj) {
+			if (this.modelEl && this.modelEl.object3D) {
+				this.modelEl.object3D.getWorldPosition(spawnPos);
+			} else {
+				refObj.getWorldPosition(spawnPos);
+			}
+			
+			// Créer plusieurs sphères de fumée
+			for (let i = 0; i < 15; i++) {
+				setTimeout(() => {
+					const smoke = document.createElement('a-sphere');
+					const offsetX = (Math.random() - 0.5) * 0.3;
+					const offsetZ = (Math.random() - 0.5) * 0.3;
+					
+					smoke.setAttribute('position', `${spawnPos.x + offsetX} ${spawnPos.y} ${spawnPos.z + offsetZ}`);
+					smoke.setAttribute('radius', '0.1');
+					smoke.setAttribute('color', '#CCCCCC');
+					smoke.setAttribute('material', 'shader: flat; opacity: 0.6; transparent: true');
+					
+					// Animation montante et expansion
+					smoke.setAttribute('animation__move', {
+						property: 'position',
+						to: `${spawnPos.x + offsetX} ${spawnPos.y + 1.5} ${spawnPos.z + offsetZ}`,
+						dur: 1000,
+						easing: 'easeOutQuad'
+					});
+					
+					smoke.setAttribute('animation__scale', {
+						property: 'scale',
+						from: '0.5 0.5 0.5',
+						to: '2 2 2',
+						dur: 1000,
+						easing: 'easeOutQuad'
+					});
+					
+					smoke.setAttribute('animation__fade', {
+						property: 'material.opacity',
+						from: 0.6,
+						to: 0,
+						dur: 1000,
+						easing: 'easeInQuad'
+					});
+					
+					this.el.sceneEl.appendChild(smoke);
+					
+					// Supprimer la fumée après l'animation
+					setTimeout(() => {
+						if (smoke.parentNode) {
+							smoke.parentNode.removeChild(smoke);
+						}
+					}, 1100);
+				}, i * 50); // Décalage pour effet progressif
+			}
+			
+			console.log('💨 Rechargement en cours avec effet de fumée...');
+		}
+		
 		setTimeout(() => {
 			this.ammo = this.data.magazine;
 			this.reloading = false;
+			console.log('🔄 Rechargement terminé!');
 		}, this.data.reloadTime);
 	},
 
@@ -217,9 +311,57 @@ AFRAME.registerComponent('pistolet-shooter', {
 			const obj = p.el.object3D;
 			const vel = obj.userData.velocity;
 			if (!vel) continue;
+			
+			// Sauvegarder la position actuelle pour le raycast
+			const currentPos = obj.position.clone();
+			
+			// Mettre à jour la position
 			obj.position.addScaledVector(vel, dt);
+			
+			// Détecter les collisions avec les ennemis
+			const raycaster = new THREE.Raycaster();
+			const direction = obj.position.clone().sub(currentPos).normalize();
+			const distance = obj.position.distanceTo(currentPos);
+			
+			raycaster.set(currentPos, direction);
+			
+			// Chercher tous les ennemis dans la scène
+			const enemies = document.querySelectorAll('[data-tag="enemy"]');
+			let hit = false;
+			
+			for (let enemy of enemies) {
+				if (!enemy.object3D) continue;
+				
+				const intersects = raycaster.intersectObject(enemy.object3D, true);
+				
+				if (intersects.length > 0 && intersects[0].distance <= distance) {
+					// Collision détectée!
+					hit = true;
+					const enemyId = enemy.id;
+					const damage = obj.userData.damage || this.data.damage;
+					
+					// Importer et appeler damageEnemy
+					import('../enemyBehavior.js').then(module => {
+						const remainingHealth = module.damageEnemy(enemyId, damage);
+						console.log(`🎯 Balle a touché ${enemyId} pour ${damage} dégâts!`);
+						
+						// Ajouter du score
+						import('../game.js').then(gameModule => {
+							if (remainingHealth === 0) {
+								gameModule.addScore(100); // Ennemi tué
+							} else {
+								gameModule.addScore(10); // Ennemi touché
+							}
+						});
+					});
+					
+					break;
+				}
+			}
+			
+			// Supprimer le projectile s'il a touché ou si sa durée de vie est écoulée
 			p.life -= delta;
-			if (p.life <= 0) {
+			if (hit || p.life <= 0) {
 				p.el.parentNode && p.el.parentNode.removeChild(p.el);
 				this.projectiles.splice(i, 1);
 			}

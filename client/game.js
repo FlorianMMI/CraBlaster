@@ -66,7 +66,23 @@ function render() {
 
 // Score management
 export function addScore(points) {
+    const previousScore = gameScore;
+    const previousThreshold = Math.floor(previousScore / 1000);
+    
     gameScore += points;
+    const newThreshold = Math.floor(gameScore / 1000);
+    
+    // Si on a franchi un palier de 1000
+    if (newThreshold > previousThreshold && newThreshold > 0) {
+        const levelupSound = document.querySelector('#levelup');
+        if (levelupSound) {
+            const soundClone = levelupSound.cloneNode();
+            soundClone.volume = 0.5;
+            soundClone.play().catch(() => {});
+            console.log(`🎆 LEVEL UP! Palier ${newThreshold * 1000} atteint!`);
+        }
+    }
+    
     updateScoreDisplay();
     console.log(`➕ +${points} points | Score: ${gameScore}`);
 }

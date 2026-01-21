@@ -3,12 +3,12 @@ import { cleanupEnemyData } from './enemyBehavior.js';
 
 AFRAME.registerComponent('spawn-manager', {
   schema: {
-    initialInterval: { type: 'number', default: 3000 }, // Intervalle de départ (10 secondes)
-    minInterval: { type: 'number', default: 200 },      // Intervalle minimum (2 secondes)
+    initialInterval: { type: 'number', default: 1500 }, // Intervalle de départ (1.5 secondes)
+    minInterval: { type: 'number', default: 300 },      // Intervalle minimum (0.3 secondes)
     spawnRadius: { type: 'number', default: 20 },        // Rayon autour de la box
     gameDuration: { type: 'number', default: 120000 },   // Durée de la partie (2 minutes)
-    maxEnemies: { type: 'number', default: 25 },         // Nombre maximum d'ennemis
-    spawnDelay: { type: 'number', default: 20000 },      // Délai avant le spawn automatique (20 secondes)
+    maxEnemies: { type: 'number', default: 50 },         // Nombre maximum d'ennemis
+    spawnDelay: { type: 'number', default: 5000 },       // Délai avant le spawn automatique (5 secondes)
     initialEnemies: { type: 'number', default: 5 }       // Nombre d'ennemis au départ
   },
 

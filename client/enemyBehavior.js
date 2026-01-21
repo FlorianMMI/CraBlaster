@@ -2,11 +2,40 @@
 const enemyData = new Map();
 let enemiesShouldFlee = false;
 
+// Composant A-Frame pour faire constamment face à la caméra
+AFRAME.registerComponent('billboard', {
+  init: function() {
+    this.camera = null;
+  },
+  
+  tick: function() {
+    if (!this.camera) {
+      this.camera = document.querySelector('[camera]');
+      if (!this.camera) return;
+    }
+    
+    // Faire toujours face à la caméra
+    const cameraPos = this.camera.object3D.position;
+    const thisPos = this.el.object3D.position;
+    
+    // Calculer la direction vers la caméra
+    const direction = new THREE.Vector3();
+    direction.subVectors(cameraPos, thisPos);
+    direction.y = 0; // Garder la barre horizontale
+    direction.normalize();
+    
+    // Orienter vers la caméra
+    const angle = Math.atan2(direction.x, direction.z);
+    this.el.object3D.rotation.y = angle;
+  }
+});
+
 // Créer une barre de vie pour un ennemi
 function createHealthBar(enemy) {
   const healthBarContainer = document.createElement('a-entity');
   healthBarContainer.setAttribute('id', `healthbar-${enemy.id}`);
   healthBarContainer.setAttribute('position', '0 2.5 0');
+  healthBarContainer.setAttribute('billboard', ''); // Utiliser notre composant billboard
   
   // Fond de la barre (rouge)
   const healthBarBg = document.createElement('a-plane');
@@ -25,9 +54,6 @@ function createHealthBar(enemy) {
   healthBarFill.setAttribute('material', 'shader: flat; transparent: true; opacity: 0.9');
   healthBarFill.setAttribute('position', '0 0 0.01');
   healthBarContainer.appendChild(healthBarFill);
-  
-  // Faire face à la caméra
-  healthBarContainer.setAttribute('look-at', '#player');
   
   enemy.appendChild(healthBarContainer);
   console.log(`❤️ Barre de vie créée pour ${enemy.id}`);
@@ -88,26 +114,64 @@ export default function enemyBehavior(enemy){
   const enemyPos = enemy.object3D.position;
   const enemyId = enemy.id;
   
+  // Vérifier la collision avec le joueur
+  const distanceToPlayer = enemyPos.distanceTo(rigPos);
+  if (distanceToPlayer < 1.5) { // Collision si distance < 1.5 unités
+    const data = enemyData.get(enemyId);
+    if (data && !data.hasCollidedThisFrame) {
+      data.hasCollidedThisFrame = true;
+      
+      // Faire baisser le score
+      import('./game.js').then(gameModule => {
+        gameModule.addScore(-50); // -50 points pour collision
+        console.log('💢 Collision avec un ennemi! -50 points');
+      });
+      
+      // Réinitialiser le flag après 2 secondes pour éviter les collisions multiples
+      setTimeout(() => {
+        if (data) {
+          data.hasCollidedThisFrame = false;
+        }
+      }, 2000);
+    }
+  }
+  
   // Initialiser les données de l'ennemi s'il n'existe pas
   if (!enemyData.has(enemyId)) {
     enemyData.set(enemyId, {
       lastPosition: enemyPos.clone(),
       lastMoveTime: Date.now(),
       stuckCount: 0,
-      maxHealth: 100,
+      maxHealth: 100, // 2 tirs de blaster (50 damage chacun) pour tuer
       currentHealth: 100,
-      healthBarCreated: false
+      healthBarCreated: false,
+      hasCollidedThisFrame: false,
+      lastSoundTime: Date.now(),
+      nextSoundDelay: Math.random() * 5000 + 3000 // Entre 3 et 8 secondes
     });
   }
   
-  // Créer la barre de vie si elle n'existe pas encore
+  // Récupérer les données de l'ennemi
   const data = enemyData.get(enemyId);
+  const currentTime = Date.now();
+  
+  // Jouer le son du crabe de manière aléatoire
+  if (currentTime - data.lastSoundTime > data.nextSoundDelay) {
+    const soundcrab = document.querySelector('#soundcrab');
+    if (soundcrab) {
+      const soundClone = soundcrab.cloneNode();
+      soundClone.volume = 0.15; // Volume réduit à 15%
+      soundClone.play().catch(() => {});
+    }
+    data.lastSoundTime = currentTime;
+    data.nextSoundDelay = Math.random() * 5000 + 3000; // Nouveau délai aléatoire
+  }
+  
+  // Créer la barre de vie si elle n'existe pas encore
   if (!data.healthBarCreated) {
     createHealthBar(enemy);
     data.healthBarCreated = true;
   }
-  
-  const currentTime = Date.now();
   
   // Calculer la distance parcourue depuis la dernière vérification
   const distanceMoved = enemyPos.distanceTo(data.lastPosition);
@@ -212,9 +276,88 @@ export function damageEnemy(enemyId, damage) {
     if (data.currentHealth <= 0) {
       const enemy = document.getElementById(enemyId);
       if (enemy && enemy.parentNode) {
+        // Créer une explosion à la position de l'ennemi
+        const enemyPos = enemy.object3D.position;
+        
+        // Flash lumineux central
+        const flash = document.createElement('a-sphere');
+        flash.setAttribute('position', `${enemyPos.x} ${enemyPos.y + 1} ${enemyPos.z}`);
+        flash.setAttribute('radius', '0.3');
+        flash.setAttribute('color', '#FFA500');
+        flash.setAttribute('material', 'emissive: #FF4500; emissiveIntensity: 3; shader: standard; transparent: true');
+        flash.setAttribute('animation__scale', {
+          property: 'scale',
+          from: '1 1 1',
+          to: '5 5 5',
+          dur: 400,
+          easing: 'easeOutQuad'
+        });
+        flash.setAttribute('animation__opacity', {
+          property: 'material.opacity',
+          from: 1,
+          to: 0,
+          dur: 400,
+          easing: 'easeInQuad'
+        });
+        enemy.parentNode.appendChild(flash);
+        
+        // Créer des sphères de débris qui s'envolent
+        const colors = ['#FF4500', '#FFA500', '#FFD700', '#FF0000'];
+        for (let i = 0; i < 20; i++) {
+          setTimeout(() => {
+            const debris = document.createElement('a-sphere');
+            const angle = (Math.PI * 2 * i) / 20;
+            const radius = 2 + Math.random() * 2;
+            const height = 1 + Math.random() * 2;
+            
+            debris.setAttribute('position', `${enemyPos.x} ${enemyPos.y + 1} ${enemyPos.z}`);
+            debris.setAttribute('radius', '0.1');
+            debris.setAttribute('color', colors[Math.floor(Math.random() * colors.length)]);
+            debris.setAttribute('material', 'emissive: #FF4500; emissiveIntensity: 1; transparent: true');
+            
+            debris.setAttribute('animation__move', {
+              property: 'position',
+              to: `${enemyPos.x + Math.cos(angle) * radius} ${enemyPos.y + height} ${enemyPos.z + Math.sin(angle) * radius}`,
+              dur: 800,
+              easing: 'easeOutQuad'
+            });
+            
+            debris.setAttribute('animation__fade', {
+              property: 'material.opacity',
+              from: 1,
+              to: 0,
+              dur: 800,
+              easing: 'easeInQuad'
+            });
+            
+            enemy.parentNode.appendChild(debris);
+            
+            setTimeout(() => {
+              if (debris.parentNode) {
+                debris.parentNode.removeChild(debris);
+              }
+            }, 850);
+          }, i * 20);
+        }
+        
+        // Supprimer le flash après l'animation
+        setTimeout(() => {
+          if (flash.parentNode) {
+            flash.parentNode.removeChild(flash);
+          }
+        }, 450);
+        
+        // Supprimer l'ennemi
         enemy.parentNode.removeChild(enemy);
         cleanupEnemyData(enemyId);
-        console.log(`☠️ ${enemyId} est mort !`);
+        console.log(`💥☠️ ${enemyId} est mort dans une explosion !`);
+        
+        // Jouer le son plop
+        const plopSound = document.querySelector('#plop');
+        if (plopSound) {
+          const soundClone = plopSound.cloneNode();
+          soundClone.play().catch(() => {});
+        }
       }
     }
     

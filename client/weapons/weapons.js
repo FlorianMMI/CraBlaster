@@ -3,15 +3,8 @@
 
 // Registre des armes disponibles
 const weaponRegistry = {
-    sabre: {
-        name: 'Sabre Laser',
-        icon: '⚔️', // Emoji ou pourrait être remplacé par une image
-        color: '#00e6ff',
-        initFunction: null, // Sera défini lors de l'import
-        activeEntity: null
-    },
     pistolet: {
-        name: 'Pistolet',
+        name: 'Blaster',
         icon: '🔫',
         color: '#ff6600',
         initFunction: null,
@@ -507,25 +500,7 @@ AFRAME.registerComponent('weapon-wheel', {
         console.log('Activation de', weapon.name);
         
         // Vérifier si l'arme existe déjà dans la scène
-        if (weaponKey === 'sabre') {
-            let sabre = document.querySelector('#sabre');
-            if (sabre) {
-                // L'arme existe déjà, juste s'assurer qu'elle est visible
-                console.log('Sabre déjà présent, réutilisation');
-                weapon.activeEntity = sabre;
-                return;
-            }
-            
-            // Créer le sabre
-            import('./sabre.js').then(module => {
-                module.initSabre();
-                // Attendre un peu pour que le DOM soit mis à jour
-                setTimeout(() => {
-                    weapon.activeEntity = document.querySelector('#sabre');
-                    console.log('Sabre créé et stocké');
-                }, 100);
-            });
-        } else if (weaponKey === 'pistolet') {
+        if (weaponKey === 'pistolet') {
             let gunComponent = document.querySelector('[pistolet-shooter]');
             if (gunComponent) {
                 // Le composant existe déjà
@@ -566,13 +541,7 @@ AFRAME.registerComponent('weapon-wheel', {
         console.log('Désactivation de', weapon.name);
         
         // Cacher l'arme au lieu de la détruire (pour pouvoir la réactiver rapidement)
-        if (weaponKey === 'sabre') {
-            const sabre = document.querySelector('#sabre');
-            if (sabre && sabre.parentNode) {
-                sabre.parentNode.removeChild(sabre);
-                weapon.activeEntity = null;
-            }
-        } else if (weaponKey === 'pistolet') {
+        if (weaponKey === 'pistolet') {
             const gunComponent = document.querySelector('[pistolet-shooter]');
             if (gunComponent && gunComponent.parentNode) {
                 gunComponent.parentNode.removeChild(gunComponent);
@@ -596,6 +565,16 @@ export function initWeaponWheel() {
     scene.appendChild(wheelManager);
     
     console.log('Weapon wheel initialized');
+    
+    // Activer automatiquement le blaster au démarrage (car c'est la seule arme)
+    setTimeout(() => {
+        const wheelComponent = wheelManager.components['weapon-wheel'];
+        if (wheelComponent) {
+            wheelComponent.activateWeapon('pistolet');
+            currentWeapon = 'pistolet';
+            console.log('🔫 Blaster activé automatiquement');
+        }
+    }, 500);
 }
 
 // Auto-initialisation

@@ -1,8 +1,113 @@
 // Version simplifiée sans dépendances externes
 
+let currentTimerInterval = null;
+
+// Fonction pour démarrer le timer (exportable pour rejouer)
+export function startTimer() {
+    const aScene = document.querySelector("a-scene");
+    const sky = document.querySelector("a-sky");
+    let Timer = aScene.querySelector('[data-timer]');
+    
+    if (!Timer) {
+        console.warn('⚠️ Timer non trouvé');
+        return;
+    }
+    
+    // Réinitialiser le timer à 2 minutes
+    let timeRemaining = 120;
+    Timer.setAttribute("value", "2:00");
+    Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
+    
+    // Nettoyer l'ancien timer s'il existe
+    if (currentTimerInterval) {
+        clearInterval(currentTimerInterval);
+        console.log('🧹 Ancien timer nettoyé');
+    }
+    
+    // Rotation du sky au lancement de la partie
+    sky.setAttribute("rotation", "180 0 0");
+    
+    // Arrêter la musique du menu et démarrer la musique de jeu
+    const musicstart = document.querySelector('#musicstart');
+    if (musicstart) {
+        musicstart.pause();
+        console.log('🎵 Musique menu arrêtée');
+    }
+    
+    const music = document.querySelector('#music');
+    if (music) {
+        music.currentTime = 0;
+        music.volume = 0.3; // Volume à 30%
+        music.play().catch(err => console.log('Musique auto-play bloquée:', err));
+        console.log('🎵 Musique de fond démarrée');
+    }
+    
+    // Déclencher le démarrage de la partie
+    aScene.emit('game-start');
+    console.log('🎮 Partie lancée !');
+    
+    // Démarrer le compte à rebours
+    currentTimerInterval = setInterval(function() {
+        timeRemaining--;
+        
+        // Déclencher la fuite des ennemis 10 secondes avant la fin
+        if (timeRemaining === 10) {
+            aScene.emit('enemies-flee');
+            console.log('🏃 Les ennemis fuient maintenant !');
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(currentTimerInterval);
+            Timer.setAttribute("value", "0:00");
+            Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
+            // Remettre le sky à sa rotation initiale
+            sky.setAttribute("rotation", "0 0 0");
+            console.log('⏰ Temps écoulé !');
+            
+            // Arrêter la musique
+            const music = document.querySelector('#music');
+            if (music) {
+                music.pause();
+                console.log('🎵 Musique arrêtée');
+            }
+            
+            // Redémarrer la musique du menu
+            const musicstart = document.querySelector('#musicstart');
+            if (musicstart) {
+                musicstart.currentTime = 0;
+                musicstart.play().catch(err => console.log('Musique menu auto-play bloquée:', err));
+                console.log('🎵 Musique menu redémarrée');
+            }
+            
+            // Émettre l'événement de fin de partie
+            aScene.emit('game-end');
+            console.log('🏁 Fin de partie - Timer à 0 !');
+        } else {
+            let minutes = Math.floor(timeRemaining / 60);
+            let seconds = timeRemaining % 60;
+            let timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            Timer.setAttribute("value", timeString);
+            
+            // Changer la couleur en rouge quand il reste moins de 30 secondes
+            if (timeRemaining <= 30) {
+                Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
+            }
+        }
+    }, 1000);
+}
+
 export function startmenu(onStartCallback) {
     let aScene = document.querySelector("a-scene");
     let sky = document.querySelector("a-sky");
+    
+    // Démarrer la musique du menu
+    const musicstart = document.querySelector('#musicstart');
+    if (musicstart) {
+        musicstart.currentTime = 0;
+        musicstart.volume = 0.3;
+        musicstart.play().catch(err => console.log('Musique menu auto-play bloquée:', err));
+        console.log('🎵 Musique menu démarrée');
+    }
 
 
 
@@ -31,6 +136,7 @@ export function startmenu(onStartCallback) {
     Timer.setAttribute("rotation", `0 0 0`);
     Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
     Timer.setAttribute("material", "depthTest: false");
+    Timer.setAttribute("data-timer", ""); // Attribut pour retrouver le timer
     
     // Attacher le timer à la caméra
     setTimeout(function() {
@@ -86,66 +192,22 @@ export function startmenu(onStartCallback) {
     startButton.setAttribute("position", "0 0.5 -3");
     startButton.setAttribute("class", "clickable");
 
-    let timerInterval = null;
-    let timeRemaining = 120; // 2 minutes en secondes
-
     startButton.addEventListener("click", async function () {
         console.log("Start button clicked in start.js");
+        
         title.parentNode.removeChild(title);
         plane.parentNode.removeChild(plane);
         paragraph.parentNode.removeChild(paragraph);
         startButton.parentNode.removeChild(startButton);
         
-        // Rotation du sky au lancement de la partie
-        sky.setAttribute("rotation", "180 0 0");
-        
-        // Déclencher le démarrage de la partie
-        aScene.emit('game-start');
-        console.log('🎮 Partie lancée !');
-        
-        // Démarrer le compte à rebours
-        timerInterval = setInterval(function() {
-            timeRemaining--;
-            
-            // Déclencher la fuite des ennemis 10 secondes avant la fin
-            if (timeRemaining === 10) {
-                aScene.emit('enemies-flee');
-                console.log('🏃 Les ennemis fuient maintenant !');
-            }
-            
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                Timer.setAttribute("value", "0:00");
-                Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
-                // Remettre le sky à sa rotation initiale
-                sky.setAttribute("rotation", "0 0 0");
-                console.log('⏰ Temps écoulé !');
-                
-                // Émettre l'événement de fin de partie
-                aScene.emit('game-end');
-                console.log('🏁 Fin de partie - Timer à 0 !');
-            } else {
-                let minutes = Math.floor(timeRemaining / 60);
-                let seconds = timeRemaining % 60;
-                let timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                Timer.setAttribute("value", timeString);
-                
-                // Changer la couleur en rouge quand il reste moins de 30 secondes
-                if (timeRemaining <= 30) {
-                    Timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FF0000; negate: false; opacity: 1; alphaTest: 0.5");
-                }
-            }
-        }, 1000);
-        
-        // L'environnement 3D est maintenant explorable
-
+        // Démarrer le timer
+        startTimer();
         
         // Call the game start callback if provided
         if (onStartCallback && typeof onStartCallback === 'function') {
             console.log("Calling game start callback");
             onStartCallback();
         }
-
     });
     
     aScene.appendChild(startButton);

@@ -1,5 +1,6 @@
 // Version simplifiée sans dépendances externes
 import { getScore } from "./game.js";
+import { startTimer } from "./start.js";
 
 export function endmenu(onRestartCallback) {
     let aScene = document.querySelector("a-scene");
@@ -48,31 +49,8 @@ export function endmenu(onRestartCallback) {
         paragraph.parentNode.removeChild(paragraph);
         RestartButton.parentNode.removeChild(RestartButton);
         
-        // Rotation du sky au lancement de la partie
-        sky.setAttribute("rotation", "180 0 0");
-        
-        // Récupérer le timer et le score existants et les remettre à zéro
-        let existingTimer = aScene.querySelectorAll('a-text');
-        for (let timer of existingTimer) {
-            let value = timer.getAttribute('value');
-            if (value && value.includes(':')) {
-                timer.setAttribute("value", "2:00");
-                timer.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
-                console.log('⏱️ Timer remis à zéro');
-            }
-        }
-        
-        // Remettre le score à 0
-        let existingScore = aScene.querySelector('[data-score-display]');
-        if (existingScore) {
-            existingScore.setAttribute("value", "Score: 0");
-            existingScore.setAttribute("text", "align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFD700; negate: false; opacity: 1; alphaTest: 0.5");
-            console.log('🏆 Score remis à zéro');
-        }
-        
-        // Déclencher le redémarrage de la partie
-        aScene.emit('game-start');
-        console.log('🎮 Partie relancée !');
+        // Démarrer le timer (qui s'occupe aussi de game-start)
+        startTimer();
         
         // Call the game start callback if provided
         if (onRestartCallback && typeof onRestartCallback === 'function') {
