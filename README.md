@@ -6,7 +6,7 @@ CraBlaster est un petit jeu de tir 3D/VR navigateur où vous incarnez un pilote 
 
 **Zone pour le lien de jeu**
 - Lien pour y jouer (collez l'URL ici) :
-- [https://](https://florianmmi.github.io/CraBlaster/client/index2.html)
+- [Jeu Crablaster](https://florianmmi.github.io/CraBlaster/client/index2.html)
 
 **Comment jouer**
 - Ouvrez le fichier `client/index2.html` dans un navigateur compatible WebXR/WebGL (Chrome/Edge recommandés).
