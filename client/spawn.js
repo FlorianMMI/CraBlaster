@@ -16,7 +16,7 @@ AFRAME.registerComponent('spawn-manager', {
     minInterval: { type: 'number', default: 300 },      // Intervalle minimum (0.3 secondes)
     spawnRadius: { type: 'number', default: 20 },        // Rayon autour de la box
     gameDuration: { type: 'number', default: 120000 },   // Durée de la partie (2 minutes)
-    maxEnemies: { type: 'number', default: 50 },         // Nombre maximum d'ennemis
+    maxEnemies: { type: 'number', default: 20 },         // Nombre maximum d'ennemis
     spawnDelay: { type: 'number', default: 5000 },       // Délai avant le spawn automatique (5 secondes)
     initialEnemies: { type: 'number', default: 5 }       // Nombre d'ennemis au départ
   },
