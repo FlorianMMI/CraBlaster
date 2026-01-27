@@ -1,21 +1,7 @@
-// Système de roue d'armes pour CraBlaster
-// Modulable et extensible pour ajouter facilement de nouvelles armes
-
-// Registre des armes disponibles
-const weaponRegistry = {
-    pistolet: {
-        name: 'Blaster',
-        icon: '🔫',
-        color: '#ff6600',
-        initFunction: null,
-        activeEntity: null
-    }
-    // Facile d'ajouter d'autres armes ici:
-    // fusil: { name: 'Fusil', icon: '🎯', color: '#ff0000', initFunction: null, activeEntity: null }
-};
+// Simple weapon initialization for CraBlaster
+// Auto-activates the pistol
 
 let currentWeapon = null;
-let weaponWheelVisible = false;
 
 // Composant A-Frame pour la roue d'armes
 AFRAME.registerComponent('weapon-wheel', {
