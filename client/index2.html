@@ -1094,5 +1094,93 @@
     <script src="decor2.js"></script>
 
   </a-scene>
+
+  <!-- Script pour forcer l'entrée VR en développement -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const scene = document.querySelector('a-scene');
+      
+      // Helper function pour détecter si WebXR émulateur est actif
+      const hasWebXREmulator = () => {
+        return window.WebXRPolyfill || 
+               (navigator.xr && navigator.xr._isPolyfilled) || 
+               window.XRSystem;
+      };
+      
+      // Helper function pour forcer l'entrée VR
+      const forceEnterVR = () => {
+        if (!scene || !scene.hasLoaded) {
+          setTimeout(forceEnterVR, 100);
+          return;
+        }
+        
+        try {
+          console.log('🥽 Tentative d\'entrée VR forcée...');
+          scene.enterVR().then(() => {
+            console.log('✅ Mode VR activé avec succès!');
+          }).catch(err => {
+            console.warn('⚠️ Entrée VR échouée:', err.message);
+            console.log('💡 Assurez-vous d\'avoir installé l\'extension WebXR API Emulator');
+          });
+        } catch (e) {
+          console.warn('⚠️ Entrée VR bloquée:', e.message);
+          console.log('💡 Cliquez sur le bouton VR ou installez l\'émulateur WebXR');
+        }
+      };
+      
+      // Ajouter un bouton pour forcer l'entrée VR manuellement
+      const addVRButton = () => {
+        const btn = document.createElement('button');
+        btn.innerText = '🥽 Forcer VR';
+        btn.style.cssText = `
+          position: fixed; 
+          top: 10px; 
+          right: 10px; 
+          z-index: 9999; 
+          padding: 10px; 
+          background: #0066cc; 
+          color: white; 
+          border: none; 
+          border-radius: 5px; 
+          cursor: pointer;
+          font-size: 14px;
+        `;
+        btn.onclick = forceEnterVR;
+        document.body.appendChild(btn);
+        console.log('🔧 Bouton "Forcer VR" ajouté en haut à droite');
+      };
+      
+      // Attendre que la scène soit chargée
+      if (scene.hasLoaded) {
+        setTimeout(() => {
+          addVRButton();
+          // Auto-enter si émulateur détecté (optionnel)
+          if (hasWebXREmulator()) {
+            setTimeout(forceEnterVR, 1000);
+          }
+        }, 500);
+      } else {
+        scene.addEventListener('loaded', () => {
+          setTimeout(() => {
+            addVRButton();
+            // Auto-enter si émulateur détecté (optionnel)
+            if (hasWebXREmulator()) {
+              setTimeout(forceEnterVR, 1000);
+            }
+          }, 500);
+        });
+      }
+      
+      // Ajout de raccourcis clavier pour le développement
+      window.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'v') {
+          e.preventDefault();
+          forceEnterVR();
+        }
+      });
+      
+      console.log('🎮 Mode dev VR activé - Raccourci: Ctrl+V ou bouton en haut à droite');
+    });
+  </script>
 </body>
 </html>

@@ -92,7 +92,8 @@ AFRAME.registerComponent('pistolet-shooter', {
 			if (this.hand) {
 				// Ajustements spécifiques pour VR : plus petit et rotation Y=180, Z=90
 				this.modelEl.setAttribute('scale', '0.5 0.5 0.5');
-				this.modelEl.setAttribute('rotation', '240 20 180');
+				this.modelEl.setAttribute('rotation', '-1.1 89 -37');
+				this.modelEl.setAttribute('position', '0.015 -0.05 -0.11');
 				this.hand.appendChild(this.modelEl);
 				// attach controller events immediately
 				if (this.hand.addEventListener) {
@@ -160,26 +161,46 @@ AFRAME.registerComponent('pistolet-shooter', {
 		proj.setAttribute('material', 'color: #00e6ff; emissive: #00e6ff; metalness: 0.1; roughness: 0.1; shader: standard');
 		proj.object3D.userData = { velocity: new THREE.Vector3() };
 
-		// Determine forward direction from the controller (preferred in VR) or model/camera
+		// Determine forward direction from the controller raycaster (preferred in VR) or model/camera
 		const refObj = (this.hand && this.hand.object3D) ? this.hand.object3D : (this.modelEl && this.modelEl.object3D);
 		const spawnPos = new THREE.Vector3();
 		if (refObj) {
-			// VR: always aim from the controller orientation when available
+			// VR: utiliser la direction du raycast visible de la manette
 			if (this._isVR && this.hand && this.hand.object3D) {
-				const worldQuat = new THREE.Quaternion();
-				this.hand.object3D.getWorldQuaternion(worldQuat);
-				const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(worldQuat).normalize();
+				let rayDirection = null;
+				
+				// Récupérer la direction du raycaster de la manette
+				if (this.hand.components && this.hand.components.raycaster) {
+					const raycaster = this.hand.components.raycaster.raycaster;
+					if (raycaster && raycaster.ray) {
+						rayDirection = raycaster.ray.direction.clone().normalize();
+						console.log('🎯 Utilisation direction raycast:', rayDirection);
+					}
+				}
+				
+				// Fallback vers l'orientation de la manette si pas de raycaster
+				if (!rayDirection) {
+					const worldQuat = new THREE.Quaternion();
+					this.hand.object3D.getWorldQuaternion(worldQuat);
+					rayDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(worldQuat).normalize();
+					console.log('⚠️ Fallback vers orientation manette:', rayDirection);
+				}
+				
+				// Position de spawn du projectile
 				if (this.modelEl && this.modelEl.object3D) {
 					this.modelEl.object3D.getWorldPosition(spawnPos);
 				} else {
-					this.hand.getWorldPosition(spawnPos);
+					this.hand.object3D.getWorldPosition(spawnPos);
 				}
-				// spawn slightly in front of the muzzle
-				spawnPos.addScaledVector(forward, 0.12);
+				
+				// Spawn légèrement en avant du canon
+				spawnPos.addScaledVector(rayDirection, 0.12);
 				proj.setAttribute('position', `${spawnPos.x} ${spawnPos.y} ${spawnPos.z}`);
-				proj.object3D.userData.velocity.copy(forward).multiplyScalar(this.data.ammoSpeed);
+				proj.object3D.userData.velocity.copy(rayDirection).multiplyScalar(this.data.ammoSpeed);
+				
+				// Orienter le projectile selon la direction de tir
 				const up = new THREE.Vector3(0, 1, 0);
-				const quat = new THREE.Quaternion().setFromUnitVectors(up, forward.clone().normalize());
+				const quat = new THREE.Quaternion().setFromUnitVectors(up, rayDirection.clone().normalize());
 				proj.object3D.quaternion.copy(quat);
 			} else {
 				// Non-VR: prefer camera aim so bullets follow where the player looks
