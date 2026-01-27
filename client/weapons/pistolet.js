@@ -92,7 +92,7 @@ AFRAME.registerComponent('pistolet-shooter', {
 			if (this.hand) {
 				// Ajustements spécifiques pour VR : plus petit et rotation Y=180, Z=90
 				this.modelEl.setAttribute('scale', '0.5 0.5 0.5');
-				this.modelEl.setAttribute('rotation', '-1.1 89 -37');
+				this.modelEl.setAttribute('rotation', '-1.92 91.93 -42.25');
 				this.modelEl.setAttribute('position', '0.015 -0.05 -0.11');
 				this.hand.appendChild(this.modelEl);
 				// attach controller events immediately
