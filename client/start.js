@@ -30,7 +30,7 @@ export function startmenu() {
     aScene.appendChild(plane);
 
     let paragraph = document.createElement("a-text");
-    paragraph.setAttribute("value", "Explorez l'environnement VR 3D!\nUtilisez les contrôles de mouvement pour vous déplacer.");
+    paragraph.setAttribute("value", "Les crabes vont venir vers vous, à vous de les tuer. La partie dure 2min.");
     paragraph.setAttribute("position", `0 2.2 -5`);
     paragraph.setAttribute("text", "align: center; width: 13; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5");
     aScene.appendChild(paragraph);
