@@ -102,7 +102,20 @@ if (typeof document !== 'undefined') {
 
 export default function enemyBehavior(enemy){
   const rig = document.querySelector('#rig');
-  if (!rig) return;
+  // Fallback VR: utiliser la position de la caméra si le rig ne bouge pas (casques VR)
+  let rigPos = null;
+  if (rig && rig.object3D) {
+    // Si le rig n'a pas bougé (VR), utiliser la caméra (head)
+    if (rig.object3D.position.length() < 0.01) {
+      const head = rig.querySelector('[camera]');
+      if (head && head.object3D) {
+        rigPos = head.object3D.getWorldPosition(new THREE.Vector3());
+      }
+    } else {
+      rigPos = rig.object3D.position;
+    }
+  }
+  if (!rigPos) return;
 
   // Check if enemy has nav-agent component
   if (!enemy.components['nav-agent']) {
@@ -110,7 +123,6 @@ export default function enemyBehavior(enemy){
     return;
   }
 
-  const rigPos = rig.object3D.position;
   const enemyPos = enemy.object3D.position;
   const enemyId = enemy.id;
   
