@@ -84,33 +84,53 @@ AFRAME.registerComponent('pistolet-shooter', {
 			});
 		} else {
 			// VR: attach to controller (may not exist yet)
+			// Prepare handlers so we can attach them as soon as the controller is found
+			this.shootHandler = this.shoot.bind(this);
+			this.reloadHandler = this.reload.bind(this);
+
 			this.hand = document.querySelector(this.data.handSelector);
 			if (this.hand) {
+				// Ajustements spécifiques pour VR : plus petit et rotation Y=180, Z=90
+				this.modelEl.setAttribute('scale', '0.7 0.7 0.7');
+				this.modelEl.setAttribute('rotation', '0 180 90');
 				this.hand.appendChild(this.modelEl);
+				// attach controller events immediately
+				if (this.hand.addEventListener) {
+					this.hand.addEventListener('triggerdown', this.shootHandler);
+					this.hand.addEventListener('gripdown', this.reloadHandler);
+				}
 			} else {
 				this._onSceneLoaded = () => {
 					this.hand = document.querySelector(this.data.handSelector) || this.el;
-					if (this.hand) this.hand.appendChild(this.modelEl);
+					if (this.hand) {
+						this.modelEl.setAttribute('scale', '0.7 0.7 0.7');
+						this.modelEl.setAttribute('rotation', '0 180 90');
+						this.hand.appendChild(this.modelEl);
+						if (this.hand.addEventListener) {
+							this.hand.addEventListener('triggerdown', this.shootHandler);
+							this.hand.addEventListener('gripdown', this.reloadHandler);
+						}
+					}
 				};
 				document.addEventListener('DOMContentLoaded', this._onSceneLoaded);
 				this._attachInterval = setInterval(() => {
 					if (!this.hand) {
 						this.hand = document.querySelector(this.data.handSelector);
 						if (this.hand) {
+							this.modelEl.setAttribute('scale', '0.7 0.7 0.7');
+							this.modelEl.setAttribute('rotation', '0 180 90');
 							this.hand.appendChild(this.modelEl);
+							if (this.hand.addEventListener) {
+								this.hand.addEventListener('triggerdown', this.shootHandler);
+								this.hand.addEventListener('gripdown', this.reloadHandler);
+							}
 							clearInterval(this._attachInterval);
 						}
 					}
 				}, 200);
 			}
 
-			// VR controller events
-			this.shootHandler = this.shoot.bind(this);
-			this.reloadHandler = this.reload.bind(this);
-			if (this.hand && this.hand.addEventListener) {
-				this.hand.addEventListener('triggerdown', this.shootHandler);
-				this.hand.addEventListener('gripdown', this.reloadHandler);
-			}
+			// VR controller events (handlers created earlier and attached when controller found)
 		}
 
 		// Expose API on element
@@ -140,52 +160,65 @@ AFRAME.registerComponent('pistolet-shooter', {
 		proj.setAttribute('material', 'color: #00e6ff; emissive: #00e6ff; metalness: 0.1; roughness: 0.1; shader: standard');
 		proj.object3D.userData = { velocity: new THREE.Vector3() };
 
-		// Determine forward direction from the controller or model
+		// Determine forward direction from the controller (preferred in VR) or model/camera
 		const refObj = (this.hand && this.hand.object3D) ? this.hand.object3D : (this.modelEl && this.modelEl.object3D);
 		const spawnPos = new THREE.Vector3();
 		if (refObj) {
-						// Prefer aiming with the player's camera direction so bullets follow where the player looks (PC)
-						const camEl = document.querySelector('[camera]');
-						let aimDir = new THREE.Vector3();
-						if (camEl && camEl.object3D) {
-							// Use the camera's forward direction directly for aiming
-							const camDir = new THREE.Vector3();
-							camEl.object3D.getWorldDirection(camDir);
-							camDir.normalize();
-							// getWorldDirection returns the camera's look vector; invert if bullets spawn behind
-							camDir.negate();
-							// get muzzle/world spawn position
-							if (this.modelEl && this.modelEl.object3D) {
-								this.modelEl.object3D.getWorldPosition(spawnPos);
-							} else {
-								refObj.getWorldPosition(spawnPos);
-							}
-							// spawn slightly in front of muzzle along camera direction
-							spawnPos.addScaledVector(camDir, 0.25);
-							proj.setAttribute('position', `${spawnPos.x} ${spawnPos.y} ${spawnPos.z}`);
-							proj.object3D.userData.velocity.copy(camDir).multiplyScalar(this.data.ammoSpeed);
-							// orient projectile so it visually points along velocity
-							const up = new THREE.Vector3(0, 1, 0);
-							const quat = new THREE.Quaternion().setFromUnitVectors(up, camDir.clone().normalize());
-							proj.object3D.quaternion.copy(quat);
-						} else {
-							// Fallback: use object's forward (controller) orientation
-							const worldQuat = new THREE.Quaternion();
-							refObj.getWorldQuaternion(worldQuat);
-							const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(worldQuat).normalize();
-							this.dir.copy(forward);
-							if (this.modelEl && this.modelEl.object3D) {
-								this.modelEl.object3D.getWorldPosition(spawnPos);
-							} else {
-								refObj.getWorldPosition(spawnPos);
-							}
-							spawnPos.addScaledVector(this.dir, 0.25);
-							proj.setAttribute('position', `${spawnPos.x} ${spawnPos.y} ${spawnPos.z}`);
-							proj.object3D.userData.velocity.copy(this.dir).multiplyScalar(this.data.ammoSpeed);
-							const up = new THREE.Vector3(0, 1, 0);
-							const quat = new THREE.Quaternion().setFromUnitVectors(up, this.dir.clone().normalize());
-							proj.object3D.quaternion.copy(quat);
-						}
+			// VR: always aim from the controller orientation when available
+			if (this._isVR && this.hand && this.hand.object3D) {
+				const worldQuat = new THREE.Quaternion();
+				this.hand.object3D.getWorldQuaternion(worldQuat);
+				const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(worldQuat).normalize();
+				if (this.modelEl && this.modelEl.object3D) {
+					this.modelEl.object3D.getWorldPosition(spawnPos);
+				} else {
+					this.hand.getWorldPosition(spawnPos);
+				}
+				// spawn slightly in front of the muzzle
+				spawnPos.addScaledVector(forward, 0.12);
+				proj.setAttribute('position', `${spawnPos.x} ${spawnPos.y} ${spawnPos.z}`);
+				proj.object3D.userData.velocity.copy(forward).multiplyScalar(this.data.ammoSpeed);
+				const up = new THREE.Vector3(0, 1, 0);
+				const quat = new THREE.Quaternion().setFromUnitVectors(up, forward.clone().normalize());
+				proj.object3D.quaternion.copy(quat);
+			} else {
+				// Non-VR: prefer camera aim so bullets follow where the player looks
+				const camEl = document.querySelector('[camera]');
+				if (camEl && camEl.object3D) {
+					const camDir = new THREE.Vector3();
+					camEl.object3D.getWorldDirection(camDir);
+					camDir.normalize();
+					camDir.negate();
+					if (this.modelEl && this.modelEl.object3D) {
+						this.modelEl.object3D.getWorldPosition(spawnPos);
+					} else {
+						refObj.getWorldPosition(spawnPos);
+					}
+					spawnPos.addScaledVector(camDir, 0.25);
+					proj.setAttribute('position', `${spawnPos.x} ${spawnPos.y} ${spawnPos.z}`);
+					proj.object3D.userData.velocity.copy(camDir).multiplyScalar(this.data.ammoSpeed);
+					const up = new THREE.Vector3(0, 1, 0);
+					const quat = new THREE.Quaternion().setFromUnitVectors(up, camDir.clone().normalize());
+					proj.object3D.quaternion.copy(quat);
+				} else {
+					// fallback: use object's forward orientation
+					const worldQuat = new THREE.Quaternion();
+					refObj.getWorldQuaternion(worldQuat);
+					const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(worldQuat).normalize();
+					this.dir.copy(forward);
+					if (this.modelEl && this.modelEl.object3D) {
+						this.modelEl.object3D.getWorldPosition(spawnPos);
+					} else {
+						refObj.getWorldPosition(spawnPos);
+					}
+					spawnPos.addScaledVector(this.dir, 0.25);
+					proj.setAttribute('position', `${spawnPos.x} ${spawnPos.y} ${spawnPos.z}`);
+					proj.object3D.userData.velocity.copy(this.dir).multiplyScalar(this.data.ammoSpeed);
+					const up = new THREE.Vector3(0, 1, 0);
+					const quat = new THREE.Quaternion().setFromUnitVectors(up, this.dir.clone().normalize());
+					proj.object3D.quaternion.copy(quat);
+				}
+			}
 		} else {
 			// fallback to previous method
 			proj.setAttribute('position', this._getWorldPosition());

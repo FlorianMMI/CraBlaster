@@ -185,6 +185,44 @@ export function startmenu(onStartCallback) {
         }
     });
 
+    // Ajustements HUD pour VR : rendre plus petit et repositionner lors de l'entrée/sortie VR
+    function setVRHUD() {
+        if (Timer) {
+            Timer.setAttribute('scale', '0.6 0.6 0.6');
+            Timer.setAttribute('position', '0.4 0.12 -0.6');
+            Timer.setAttribute('text', 'align: right; width: 1.2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5');
+        }
+        if (ScoreDisplay) {
+            ScoreDisplay.setAttribute('scale', '0.6 0.6 0.6');
+            ScoreDisplay.setAttribute('position', '0.4 0.02 -0.6');
+            ScoreDisplay.setAttribute('text', 'align: right; width: 1.2; font: asset/Michroma-Regular-msdf.json; color: #ffffff; negate: false; opacity: 1; alphaTest: 0.5');
+        }
+    }
+
+    function restoreHUD() {
+        if (Timer) {
+            Timer.setAttribute('scale', '1 1 1');
+            Timer.setAttribute('position', '0.75 0.35 -0.5');
+            Timer.setAttribute('text', 'align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #FFFFFF; negate: false; opacity: 1; alphaTest: 0.5');
+        }
+        if (ScoreDisplay) {
+            ScoreDisplay.setAttribute('scale', '1 1 1');
+            ScoreDisplay.setAttribute('position', '0.75 0.25 -0.5');
+            ScoreDisplay.setAttribute('text', 'align: right; width: 2; font: asset/Michroma-Regular-msdf.json; color: #ffffff; negate: false; opacity: 1; alphaTest: 0.5');
+        }
+    }
+
+    // Écouteurs pour entrer/sortir du mode VR
+    setTimeout(() => {
+        const aScene = document.querySelector('a-scene');
+        if (aScene) {
+            aScene.addEventListener('enter-vr', setVRHUD);
+            aScene.addEventListener('exit-vr', restoreHUD);
+            // Si déjà en VR, appliquer de suite
+            if (typeof aScene.is === 'function' && aScene.is('vr-mode')) setVRHUD();
+        }
+    }, 200);
+
     let startButton = document.createElement("a-entity");
     startButton.setAttribute("geometry", "primitive: plane; width: 1.5; height: 0.9;");
     startButton.setAttribute("material", "src: url(asset/Rectangle 4.png); transparent: true");
