@@ -374,8 +374,16 @@ AFRAME.registerComponent('pistolet-shooter', {
 			
 			// Détecter les collisions avec les ennemis
 			const raycaster = new THREE.Raycaster();
-			const direction = obj.position.clone().sub(currentPos).normalize();
-			const distance = obj.position.distanceTo(currentPos);
+			const direction = obj.position.clone().sub(currentPos);
+			const distance = direction.length();
+			
+			// Normaliser la direction pour le raycaster
+			if (distance > 0) {
+				direction.normalize();
+			} else {
+				// Si pas de mouvement, utiliser la direction de la vélocité
+				direction.copy(vel).normalize();
+			}
 			
 			raycaster.set(currentPos, direction);
 			
@@ -388,16 +396,19 @@ AFRAME.registerComponent('pistolet-shooter', {
 				
 				const intersects = raycaster.intersectObject(enemy.object3D, true);
 				
-				if (intersects.length > 0 && intersects[0].distance <= distance) {
+				// Vérifier s'il y a une intersection ET si elle est dans la portée du projectile
+				// On ajoute une petite marge (0.1) pour éviter les problèmes de précision en VR
+				if (intersects.length > 0 && intersects[0].distance <= distance + 0.1) {
 					// Collision détectée!
 					hit = true;
 					const enemyId = enemy.id;
 					const damage = obj.userData.damage || this.data.damage;
 					
+					console.log(`🎯 Balle a touché ${enemyId} pour ${damage} dégâts! (distance: ${intersects[0].distance.toFixed(2)}, projectile distance: ${distance.toFixed(2)})`);
+					
 					// Importer et appeler damageEnemy
 					import('../enemyBehavior.js').then(module => {
 						const remainingHealth = module.damageEnemy(enemyId, damage);
-						console.log(`🎯 Balle a touché ${enemyId} pour ${damage} dégâts!`);
 						
 						// Ajouter du score
 						import('../game.js').then(gameModule => {
@@ -416,7 +427,9 @@ AFRAME.registerComponent('pistolet-shooter', {
 			// Supprimer le projectile s'il a touché ou si sa durée de vie est écoulée
 			p.life -= delta;
 			if (hit || p.life <= 0) {
-				p.el.parentNode && p.el.parentNode.removeChild(p.el);
+				if (p.el.parentNode) {
+					p.el.parentNode.removeChild(p.el);
+				}
 				this.projectiles.splice(i, 1);
 			}
 		}
@@ -437,14 +450,14 @@ AFRAME.registerComponent('pistolet-shooter', {
 	}
 });
 
-// Helper: attach pistol to rightController automatically by adding the component to the scene
-// DÉSACTIVÉ - Le pistolet est maintenant géré par la roue d'armes (weapons.js)
-// document.addEventListener('DOMContentLoaded', () => {
-// 	const scene = document.querySelector('a-scene');
-// 	if (!scene) return;
-// 	if (!document.querySelector('[pistolet-shooter]')) {
-// 		const gunHolder = document.createElement('a-entity');
-// 		gunHolder.setAttribute('pistolet-shooter', '');
-// 		scene.appendChild(gunHolder);
-// 	}
-// });
+// Auto-initialize the pistol when the scene loads
+document.addEventListener('DOMContentLoaded', () => {
+	const scene = document.querySelector('a-scene');
+	if (!scene) return;
+	if (!document.querySelector('[pistolet-shooter]')) {
+		const gunHolder = document.createElement('a-entity');
+		gunHolder.setAttribute('pistolet-shooter', '');
+		scene.appendChild(gunHolder);
+		console.log('🔫 Pistol auto-initialized');
+	}
+});
